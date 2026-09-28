@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Settings, RoutineItem } from '../types';
 import { saveSettings } from '../db';
-import { listVoices, onVoicesReady, speak, stopSpeaking, ttsSupported } from '../lib/tts';
+import { bestVoiceUri, listVoicesSorted, onVoicesReady, scoreVoice, speak, stopSpeaking, ttsSupported, voiceQualityLabel } from '../lib/tts';
 import { startAmbient, stopAmbient } from '../lib/ambient';
 import { activeReminders, inQuietHours, requestPermission, scheduleToday } from '../lib/reminders';
 import { downloadExport, eraseAll, importBackup } from '../lib/backup';
 import { Toggle } from '../components/ui';
 
 export default function SettingsScreen({ settings }: { settings: Settings }) {
-  const [voices, setVoices] = useState(listVoices());
+  const [voices, setVoices] = useState(listVoicesSorted());
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const file = useRef<HTMLInputElement>(null);
 
-  useEffect(() => onVoicesReady(() => setVoices(listVoices())), []);
+  useEffect(() => onVoicesReady(() => setVoices(listVoicesSorted())), []);
   useEffect(() => () => { stopSpeaking(); stopAmbient(); }, []);
 
   const set = (patch: Partial<Settings>) => void saveSettings(patch);
@@ -51,12 +51,34 @@ export default function SettingsScreen({ settings }: { settings: Settings }) {
                     value={settings.tts_voice_uri ?? ''}
                     onChange={(e) => set({ tts_voice_uri: e.target.value || null })}
                   >
-                    <option value="">System default</option>
-                    {voices.map((v) => <option key={v.voiceURI} value={v.voiceURI}>{v.name}</option>)}
+                    <option value="">Auto (best available)</option>
+                    {voices.map((v) => (
+                      <option key={v.voiceURI} value={v.voiceURI}>
+                        {voiceQualityLabel(v)} · {v.name}
+                      </option>
+                    ))}
                   </select>
                 </label>
+                {voices.length > 0 && (
+                  <p className="tiny faint" style={{ marginTop: -8 }}>
+                    Best available: <strong>{voices[0]?.name}</strong>
+                    {' '}({voiceQualityLabel(voices[0])}, score {scoreVoice(voices[0])})
+                    {settings.tts_voice_uri && settings.tts_voice_uri !== bestVoiceUri() && (
+                      <>
+                        {' · '}
+                        <button
+                          className="btn-text"
+                          style={{ fontSize: 'inherit', display: 'inline' }}
+                          onClick={() => set({ tts_voice_uri: bestVoiceUri() })}
+                        >
+                          Switch to it
+                        </button>
+                      </>
+                    )}
+                  </p>
+                )}
                 <label className="field">
-                  <span>Speaking rate — {settings.tts_rate.toFixed(2)}×</span>
+                  <span>Speaking rate — {settings.tts_rate.toFixed(2)}× (0.78 is default)</span>
                   <input
                     type="range" min={0.5} max={1.2} step={0.05}
                     value={settings.tts_rate}
@@ -66,7 +88,7 @@ export default function SettingsScreen({ settings }: { settings: Settings }) {
                 <button
                   className="btn btn-ghost btn-sm"
                   onClick={() => speak(
-                    'Let your eyes rest on one point, and let each breath out take you a little further down.',
+                    'Let your eyes close... and with every breath out, feel yourself settling a little deeper. There is nothing you need to do right now, and nowhere else to be.',
                     { rate: settings.tts_rate, voiceUri: settings.tts_voice_uri },
                   )}
                 >

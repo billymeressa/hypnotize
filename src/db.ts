@@ -51,7 +51,7 @@ export const DEFAULT_SETTINGS: Settings = {
   id: 'settings',
   tts_enabled: true,
   tts_voice_uri: null,
-  tts_rate: 0.85,
+  tts_rate: 0.78,
   pace: 'slow',
   ambient: 'off',
   ambient_volume: 0.25,
