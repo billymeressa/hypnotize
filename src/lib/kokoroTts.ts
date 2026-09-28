@@ -33,19 +33,21 @@ export async function loadKokoro(onProgress?: (p: LoadProgress) => void): Promis
   _loading = (async () => {
     const { pipeline, env } = await import('@huggingface/transformers');
     env.allowRemoteModels = true;
-    env.backends.onnx.wasm!.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/';
 
     const pipe = await (pipeline as Function)(
       'text-to-speech',
       'onnx-community/Kokoro-82M-v1.0-ONNX',
       {
-        dtype: { model: 'q8' },
+        dtype: 'q8',
         progress_callback: onProgress ?? (() => {}),
       },
     );
     _pipeline = pipe as Pipeline;
     return _pipeline;
-  })();
+  })().catch((err) => {
+    _loading = null; // allow retry after failure
+    throw err;
+  });
 
   return _loading;
 }
