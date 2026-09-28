@@ -139,6 +139,16 @@ export interface Settings {
   onboarded: boolean;
   /** Suppresses the pre-session safety notice once acknowledged. */
   safety_ack: boolean;
+  /** Anthropic API key — stored only in IndexedDB on this device, sent only to api.anthropic.com */
+  ai_api_key: string;
+  /** OpenAI API key — used for TTS only, sent only to api.openai.com */
+  openai_api_key: string;
+  /** OpenAI TTS voice ID */
+  openai_voice: string;
+  /** Which TTS engine to use: kokoro (local AI), openai (cloud), or browser (system) */
+  voice_engine: 'kokoro' | 'openai' | 'browser';
+  /** Kokoro voice ID */
+  kokoro_voice: string;
 }
 
 export interface QueuedSession {

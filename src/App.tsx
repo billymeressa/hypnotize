@@ -47,7 +47,7 @@ export default function App() {
     <div className="app">
       {route === 'today' && <Today ctx={ctx} settings={settings} />}
       {route === 'library' && <Library ctx={ctx} />}
-      {route === 'coach' && <Coach ctx={ctx} />}
+      {route === 'coach' && <Coach ctx={ctx} settings={settings} />}
       {route === 'journal' && <Journal />}
       {route === 'progress' && <Progress ctx={ctx} />}
       {route === 'more' && <More ctx={ctx} />}

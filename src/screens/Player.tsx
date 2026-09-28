@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Completion, SessionPlan, Settings } from '../types';
 import { db, today, uid } from '../db';
-import { speak, stopSpeaking, ttsSupported } from '../lib/tts';
+import { speak, stopSpeaking } from '../lib/tts';
 import { startAmbient, stopAmbient } from '../lib/ambient';
 import { PACE_WPS } from '../lib/compose';
 import { keepAwake, releaseAwake, trapBack } from '../lib/platform';
@@ -45,8 +45,16 @@ export default function Player({
       });
     };
 
-    if (settings.tts_enabled && ttsSupported()) {
-      speak(step.body, { rate: settings.tts_rate, voiceUri: settings.tts_voice_uri, onEnd: advance });
+    if (settings.tts_enabled) {
+      speak(step.body, {
+        rate: settings.tts_rate,
+        voiceUri: settings.tts_voice_uri,
+        onEnd: advance,
+        engine: settings.voice_engine ?? 'kokoro',
+        kokoroVoice: settings.kokoro_voice || 'am_adam',
+        openaiKey: settings.openai_api_key || undefined,
+        openaiVoice: (settings.openai_voice || 'onyx') as import('../lib/tts').OpenAIVoice,
+      });
       return () => { cancelled = true; stopSpeaking(); };
     }
     const words = step.body.trim().split(/\s+/).length;

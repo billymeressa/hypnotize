@@ -57,7 +57,7 @@ export function Sheet({ children, onClose, title }: { children: ReactNode; onClo
     return () => { document.removeEventListener('keydown', esc); untrap(); };
   }, [onClose]);
   return (
-    <div className="sheet-backdrop" onClick={onClose}>
+    <div className="sheet-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="sheet" role="dialog" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="row-between" style={{ marginBottom: 18 }}>
           <h2>{title}</h2>

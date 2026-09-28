@@ -76,6 +76,11 @@ export const DEFAULT_SETTINGS: Settings = {
   max_reminders_per_day: 5,
   onboarded: false,
   safety_ack: false,
+  ai_api_key: '',
+  openai_api_key: '',
+  openai_voice: 'onyx',
+  voice_engine: 'kokoro',
+  kokoro_voice: 'am_adam',
   reminders: [
     { id: 'r-morning', slot: 'morning', time: '07:00', text: 'Session first. Email can wait.', enabled: true },
     { id: 'r-mid1', slot: 'midday', time: '11:30', text: 'Language check.', enabled: true },

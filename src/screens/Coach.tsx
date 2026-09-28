@@ -1,16 +1,31 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Launcher } from '../App';
-import type { ChatMessage, ProfileFact, SessionPlan } from '../types';
+import type { ChatMessage, ProfileFact, SessionPlan, Settings } from '../types';
 import { db, getProfile, uid } from '../db';
-import { coachOpener, coachReply, conversationTitle, proposeFacts, suggestSessionType, type FactProposal } from '../lib/coach';
+import { coachOpener, coachReply, conversationTitle, looksLikeCrisis, CRISIS_RESPONSE, proposeFacts, suggestSessionType, type FactProposal } from '../lib/coach';
 import { composeSession, personalSuggestions } from '../lib/compose';
 import { SESSION_TYPE_META } from '../lib/content';
+import { streamClaude } from '../lib/ai';
 import { Sheet, Wave } from '../components/ui';
 
 const CONV_KEY = 'hypnotize.conversation';
 
-export default function Coach({ ctx }: { ctx: Launcher }) {
+const AI_SYSTEM = `You are the Change Coach in Hypnotize, a personal hypnosis app. Your role is to help users identify what they want to change through reflective, Socratic dialogue.
+
+Rules:
+- Ask one question at a time. Keep replies to 2–3 short paragraphs maximum.
+- When users say "should / need to / must / try to", reflect the phrase back rephrased as "I want to" and ask if that still reads as true.
+- Never tell users what to do or give unsolicited advice. Only ask questions that help them articulate their own answers.
+- When a specific struggle, goal, or behaviour pattern emerges, name it plainly and ask them to say more about it.
+- After 3 or more user messages, you may offer: "When you're ready, I can turn this into a session — you'll see every suggestion before it starts."
+- Tone: direct, warm, unhurried. No filler words. No "absolutely!" or "great question!".
+- This is not therapy. If someone clearly needs professional support, say so plainly.
+- The app delivers guided hypnosis. Sessions use suggestion, repetition, and relaxation — and the user always sees every suggestion before a session begins.`;
+
+export default function Coach({ ctx, settings }: { ctx: Launcher; settings: Settings }) {
+  const hasKey = !!settings.ai_api_key;
+
   const [conversationId, setConversationId] = useState(
     () => localStorage.getItem(CONV_KEY) ?? uid(),
   );
@@ -18,6 +33,9 @@ export default function Coach({ ctx }: { ctx: Launcher }) {
   const [proposals, setProposals] = useState<FactProposal[] | null>(null);
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [history, setHistory] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  const [streamBuf, setStreamBuf] = useState('');
+  const [aiError, setAiError] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
   const openerSent = useRef<string | null>(null);
 
@@ -32,10 +50,8 @@ export default function Coach({ ctx }: { ctx: Launcher }) {
   const profile = useLiveQuery(() => getProfile(), [], undefined);
   const pastSessions = useLiveQuery(() => db.completions.orderBy('started_at').reverse().limit(3).toArray(), [], []);
 
-  useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages?.length]);
+  useEffect(() => { bottom.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages?.length, streamBuf]);
 
-  // The Guide opens the conversation rather than leaving a blank box. The ref guards against a
-  // second insert from React's double-invoked effects before the liveQuery has caught up.
   useEffect(() => {
     if (!messages || messages.length > 0) return;
     if (openerSent.current === conversationId) return;
@@ -48,21 +64,58 @@ export default function Coach({ ctx }: { ctx: Launcher }) {
 
   const send = async () => {
     const text = draft.trim();
-    if (!text) return;
+    if (!text || streaming) return;
     setDraft('');
+    setAiError(null);
     const now = Date.now();
+
+    if (looksLikeCrisis(text)) {
+      await db.chat.put({ id: uid(), conversation_id: conversationId, role: 'user', text, created_at: now });
+      await db.chat.put({ id: uid(), conversation_id: conversationId, role: 'guide', text: CRISIS_RESPONSE, created_at: now + 1 });
+      return;
+    }
+
     await db.chat.put({ id: uid(), conversation_id: conversationId, role: 'user', text, created_at: now });
-    const prior = await db.chat.where('conversation_id').equals(conversationId).sortBy('created_at');
-    await db.chat.put({
-      id: uid(), conversation_id: conversationId, role: 'guide',
-      text: coachReply(prior, text), created_at: now + 1,
-    });
+
+    if (hasKey) {
+      // AI streaming path
+      const prior = await db.chat.where('conversation_id').equals(conversationId).sortBy('created_at');
+      const aiMessages = prior.map((m) => ({
+        role: (m.role === 'guide' ? 'assistant' : 'user') as 'user' | 'assistant',
+        content: m.text,
+      }));
+      // include the new user message
+      aiMessages.push({ role: 'user', content: text });
+
+      setStreaming(true);
+      setStreamBuf('');
+      let reply = '';
+      try {
+        for await (const chunk of streamClaude(settings.ai_api_key, aiMessages, AI_SYSTEM)) {
+          reply += chunk;
+          setStreamBuf(reply);
+        }
+        await db.chat.put({ id: uid(), conversation_id: conversationId, role: 'guide', text: reply, created_at: now + 1 });
+      } catch (err) {
+        setAiError((err as Error).message);
+      } finally {
+        setStreaming(false);
+        setStreamBuf('');
+      }
+    } else {
+      // Offline fallback
+      const prior = await db.chat.where('conversation_id').equals(conversationId).sortBy('created_at');
+      await db.chat.put({
+        id: uid(), conversation_id: conversationId, role: 'guide',
+        text: coachReply(prior, text), created_at: now + 1,
+      });
+    }
   };
 
   const review = () => {
     const props = proposeFacts(messages ?? [], conversationId);
     setProposals(props);
-    setChosen(new Set(props.map((p) => p.id)));   // pre-checked, but nothing saves until confirmed
+    setChosen(new Set(props.map((p) => p.id)));
   };
 
   const saveChosen = async () => {
@@ -99,6 +152,7 @@ export default function Coach({ ctx }: { ctx: Launcher }) {
   };
 
   const conversations = groupConversations(allMessages ?? []);
+  const userTurns = (messages ?? []).filter((m) => m.role === 'user').length;
 
   return (
     <div className="screen">
@@ -109,13 +163,20 @@ export default function Coach({ ctx }: { ctx: Launcher }) {
             <p>Tell it what you want to change. It asks; you do the talking.</p>
           </div>
         </div>
+        {!hasKey && (
+          <p className="notice" style={{ marginTop: 12 }}>
+            Add your Anthropic API key in Settings → AI to unlock real AI coaching.
+            <button className="btn-text" style={{ marginLeft: 8 }} onClick={() => (location.hash = '#/settings')}>
+              Go to Settings
+            </button>
+          </p>
+        )}
       </div>
 
       {pastSessions.length > 0 && messages && messages.length <= 1 && (
         <p className="notice" style={{ marginBottom: 18 }}>
           Last session: {pastSessions[0].title}
           {profile?.facts.length ? ` · ${profile.facts.length} facts in your profile` : ''}.
-          It'll refer back to those.
         </p>
       )}
 
@@ -123,6 +184,17 @@ export default function Coach({ ctx }: { ctx: Launcher }) {
         {(messages ?? []).map((m) => (
           <div key={m.id} className={`bubble bubble-${m.role}`}>{m.text}</div>
         ))}
+        {streaming && streamBuf && (
+          <div className="bubble bubble-guide" style={{ opacity: 0.8 }}>{streamBuf}</div>
+        )}
+        {streaming && !streamBuf && (
+          <div className="bubble bubble-guide" style={{ opacity: 0.5 }}>
+            <Wave bars={5} />
+          </div>
+        )}
+        {aiError && (
+          <p className="notice" style={{ color: 'var(--danger, #ff6b6b)' }}>AI error: {aiError}</p>
+        )}
         <div ref={bottom} />
       </div>
 
@@ -131,14 +203,17 @@ export default function Coach({ ctx }: { ctx: Launcher }) {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Type as much or as little as you want…"
+          disabled={streaming}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void send(); }
           }}
         />
-        <button className="btn btn-block" onClick={send} disabled={!draft.trim()}>Send</button>
+        <button className="btn btn-block" onClick={send} disabled={!draft.trim() || streaming}>
+          {streaming ? 'Thinking…' : 'Send'}
+        </button>
       </div>
 
-      {(messages?.filter((m) => m.role === 'user').length ?? 0) >= 2 && (
+      {userTurns >= 2 && (
         <div className="stack" style={{ marginTop: 26 }}>
           <div className="divider" />
           <button className="btn btn-ghost btn-block" onClick={review}>Review what to remember</button>
@@ -151,10 +226,7 @@ export default function Coach({ ctx }: { ctx: Launcher }) {
 
       <div className="row-between" style={{ marginTop: 30 }}>
         <button className="btn-text" onClick={() => setHistory(true)}>Past conversations ({conversations.length})</button>
-        <button
-          className="btn-text"
-          onClick={() => { const id = uid(); setConversationId(id); }}
-        >
+        <button className="btn-text" onClick={() => { const id = uid(); setConversationId(id); }}>
           New conversation
         </button>
       </div>

@@ -43,16 +43,27 @@ export async function releaseAwake(): Promise<void> {
 /**
  * On Android the system back gesture would otherwise close the whole app from inside a session.
  * Pushing a history entry turns back into "stop this session" / "close this sheet".
+ *
+ * React Strict Mode (dev) mounts → unmounts → remounts components. The cleanup's history.back()
+ * fires a popstate that the second-mount handler would otherwise receive and call onBack() on.
+ * _skipNext guards against that: cleanup sets it true, next handler skips one popstate.
  */
+let _skipNext = false;
+
 export function trapBack(onBack: () => void): () => void {
   const state = { trap: Date.now() };
   history.pushState(state, '');
-  const handler = () => onBack();
+  const handler = () => {
+    if (_skipNext) { _skipNext = false; return; }
+    onBack();
+  };
   addEventListener('popstate', handler);
   return () => {
     removeEventListener('popstate', handler);
-    // Only unwind our own entry — never eat a real navigation.
-    if (history.state?.trap === state.trap) history.back();
+    if (history.state?.trap === state.trap) {
+      _skipNext = true;
+      history.back();
+    }
   };
 }
 

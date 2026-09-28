@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Settings, RoutineItem } from '../types';
 import { saveSettings } from '../db';
-import { bestVoiceUri, listVoicesSorted, onVoicesReady, scoreVoice, speak, stopSpeaking, ttsSupported, voiceQualityLabel } from '../lib/tts';
+import { callClaude } from '../lib/ai';
+import { bestVoiceUri, listVoicesSorted, onVoicesReady, OPENAI_VOICES, scoreVoice, speak, stopSpeaking, ttsSupported, voiceQualityLabel } from '../lib/tts';
+import { KOKORO_VOICES, kokoroReady, loadKokoro, type LoadProgress } from '../lib/kokoroTts';
 import { startAmbient, stopAmbient } from '../lib/ambient';
 import { activeReminders, inQuietHours, requestPermission, scheduleToday } from '../lib/reminders';
 import { downloadExport, eraseAll, importBackup } from '../lib/backup';
@@ -10,12 +12,34 @@ import { Toggle } from '../components/ui';
 export default function SettingsScreen({ settings }: { settings: Settings }) {
   const [voices, setVoices] = useState(listVoicesSorted());
   const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [keyDraft, setKeyDraft] = useState(settings.ai_api_key);
+  const [keyStatus, setKeyStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
+  const [kokoroStatus, setKokoroStatus] = useState<'idle' | 'loading' | 'ready' | 'fail'>(kokoroReady() ? 'ready' : 'idle');
+  const [kokoroProgress, setKokoroProgress] = useState<LoadProgress | null>(null);
   const file = useRef<HTMLInputElement>(null);
 
   useEffect(() => onVoicesReady(() => setVoices(listVoicesSorted())), []);
   useEffect(() => () => { stopSpeaking(); stopAmbient(); }, []);
 
   const set = (patch: Partial<Settings>) => void saveSettings(patch);
+
+  const testKey = async () => {
+    if (!keyDraft.trim()) return;
+    setKeyStatus('testing');
+    try {
+      const reply = await callClaude(keyDraft.trim(), [{ role: 'user', content: 'Reply with exactly: ok' }], 'You are a test.', 10);
+      if (reply.toLowerCase().includes('ok')) {
+        setKeyStatus('ok');
+        set({ ai_api_key: keyDraft.trim() });
+      } else {
+        setKeyStatus('fail');
+      }
+    } catch {
+      setKeyStatus('fail');
+    }
+  };
+
+  const saveKey = () => { set({ ai_api_key: keyDraft.trim() }); setKeyStatus('idle'); };
 
   const toggleRoutine = (item: RoutineItem) => {
     set({ routine: settings.routine.map((r) => (r.id === item.id ? { ...r, enabled: !r.enabled } : r)) });
@@ -45,55 +69,139 @@ export default function SettingsScreen({ settings }: { settings: Settings }) {
             )}
             {settings.tts_enabled && (
               <div className="stack" style={{ marginTop: 16 }}>
+                {/* Engine selector */}
                 <label className="field">
-                  <span>Voice</span>
+                  <span>Voice engine</span>
                   <select
-                    value={settings.tts_voice_uri ?? ''}
-                    onChange={(e) => set({ tts_voice_uri: e.target.value || null })}
+                    value={settings.voice_engine ?? 'kokoro'}
+                    onChange={(e) => set({ voice_engine: e.target.value as Settings['voice_engine'] })}
                   >
-                    <option value="">Auto (best available)</option>
-                    {voices.map((v) => (
-                      <option key={v.voiceURI} value={v.voiceURI}>
-                        {voiceQualityLabel(v)} · {v.name}
-                      </option>
-                    ))}
+                    <option value="kokoro">Free AI voice (Kokoro — runs in browser)</option>
+                    <option value="openai">OpenAI TTS (key required)</option>
+                    <option value="browser">Browser / system voice</option>
                   </select>
                 </label>
-                {voices.length > 0 && (
-                  <p className="tiny faint" style={{ marginTop: -8 }}>
-                    Best available: <strong>{voices[0]?.name}</strong>
-                    {' '}({voiceQualityLabel(voices[0])}, score {scoreVoice(voices[0])})
-                    {settings.tts_voice_uri && settings.tts_voice_uri !== bestVoiceUri() && (
-                      <>
-                        {' · '}
+
+                {/* Kokoro options */}
+                {(settings.voice_engine ?? 'kokoro') === 'kokoro' && (
+                  <div className="stack">
+                    <label className="field">
+                      <span>Kokoro voice</span>
+                      <select
+                        value={settings.kokoro_voice || 'am_adam'}
+                        onChange={(e) => set({ kokoro_voice: e.target.value })}
+                      >
+                        {KOKORO_VOICES.map((v) => (
+                          <option key={v.id} value={v.id}>{v.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="row" style={{ gap: 8 }}>
+                      {kokoroStatus !== 'ready' && (
                         <button
-                          className="btn-text"
-                          style={{ fontSize: 'inherit', display: 'inline' }}
-                          onClick={() => set({ tts_voice_uri: bestVoiceUri() })}
+                          className="btn btn-ghost btn-sm"
+                          disabled={kokoroStatus === 'loading'}
+                          onClick={() => {
+                            setKokoroStatus('loading');
+                            setKokoroProgress(null);
+                            loadKokoro((p) => setKokoroProgress(p))
+                              .then(() => { setKokoroStatus('ready'); setKokoroProgress(null); })
+                              .catch(() => setKokoroStatus('fail'));
+                          }}
                         >
-                          Switch to it
+                          {kokoroStatus === 'loading' ? 'Downloading model…' : 'Load AI voice model (~82 MB)'}
                         </button>
-                      </>
+                      )}
+                      {kokoroStatus === 'ready' && (
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => speak(
+                            'Let your eyes close... and with every breath out, feel yourself settling a little deeper. There is nothing you need to do right now, and nowhere else to be.',
+                            { rate: settings.tts_rate, voiceUri: null, engine: 'kokoro', kokoroVoice: settings.kokoro_voice || 'am_adam' },
+                          )}
+                        >
+                          Hear it
+                        </button>
+                      )}
+                    </div>
+                    {kokoroStatus === 'loading' && kokoroProgress && (
+                      <p className="tiny faint">
+                        {kokoroProgress.name ?? kokoroProgress.status}
+                        {kokoroProgress.progress != null && ` — ${Math.round(kokoroProgress.progress)}%`}
+                      </p>
                     )}
-                  </p>
+                    {kokoroStatus === 'ready' && <p className="tiny" style={{ color: 'var(--accent)' }}>Model ready.</p>}
+                    {kokoroStatus === 'fail' && <p className="tiny" style={{ color: 'var(--danger,#f55)' }}>Download failed — check your connection and try again.</p>}
+                    {kokoroStatus === 'idle' && (
+                      <p className="tiny faint">Model downloads once (~82 MB) and is then cached on this device. Sessions won't start until it's loaded — you can also let the first session trigger it automatically.</p>
+                    )}
+                  </div>
                 )}
+
+                {/* OpenAI voice options */}
+                {settings.voice_engine === 'openai' && settings.openai_api_key && (
+                  <label className="field">
+                    <span>OpenAI voice</span>
+                    <select
+                      value={settings.openai_voice || 'onyx'}
+                      onChange={(e) => set({ openai_voice: e.target.value })}
+                    >
+                      {OPENAI_VOICES.map((v) => (
+                        <option key={v.id} value={v.id}>{v.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {settings.voice_engine === 'openai' && !settings.openai_api_key && (
+                  <p className="tiny faint">Add your OpenAI key in Settings → AI below.</p>
+                )}
+
+                {/* Browser voice options */}
+                {settings.voice_engine === 'browser' && (
+                  <>
+                    <label className="field">
+                      <span>Voice</span>
+                      <select
+                        value={settings.tts_voice_uri ?? ''}
+                        onChange={(e) => set({ tts_voice_uri: e.target.value || null })}
+                      >
+                        <option value="">Auto (best available)</option>
+                        {voices.map((v) => (
+                          <option key={v.voiceURI} value={v.voiceURI}>
+                            {voiceQualityLabel(v)} · {v.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {voices.length > 0 && (
+                      <p className="tiny faint" style={{ marginTop: -8 }}>
+                        Best available: <strong>{voices[0]?.name}</strong>
+                        {' '}({voiceQualityLabel(voices[0])}, score {scoreVoice(voices[0])})
+                        {settings.tts_voice_uri && settings.tts_voice_uri !== bestVoiceUri() && (
+                          <> · <button className="btn-text" style={{ fontSize: 'inherit', display: 'inline' }} onClick={() => set({ tts_voice_uri: bestVoiceUri() })}>Switch to it</button></>
+                        )}
+                      </p>
+                    )}
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => speak(
+                        'Let your eyes close... and with every breath out, feel yourself settling a little deeper.',
+                        { rate: settings.tts_rate, voiceUri: settings.tts_voice_uri, engine: 'browser' },
+                      )}
+                    >
+                      Hear it
+                    </button>
+                  </>
+                )}
+
                 <label className="field">
-                  <span>Speaking rate — {settings.tts_rate.toFixed(2)}× (0.78 is default)</span>
+                  <span>Speaking rate — {settings.tts_rate.toFixed(2)}×</span>
                   <input
                     type="range" min={0.5} max={1.2} step={0.05}
                     value={settings.tts_rate}
                     onChange={(e) => set({ tts_rate: Number(e.target.value) })}
                   />
                 </label>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => speak(
-                    'Let your eyes close... and with every breath out, feel yourself settling a little deeper. There is nothing you need to do right now, and nowhere else to be.',
-                    { rate: settings.tts_rate, voiceUri: settings.tts_voice_uri },
-                  )}
-                >
-                  Hear it
-                </button>
               </div>
             )}
           </div>
@@ -224,6 +332,69 @@ export default function SettingsScreen({ settings }: { settings: Settings }) {
               itself on iOS — see the README on going native.
             </p>
           </div>
+        </section>
+
+        {/* ---------- AI ---------- */}
+        <section>
+          <p className="eyebrow">AI</p>
+
+          {/* OpenAI TTS — premium voice */}
+          <div className="card" style={{ marginTop: 12 }}>
+            <p className="small" style={{ marginBottom: 4 }}>
+              <strong>Real voice (OpenAI TTS)</strong>
+            </p>
+            <p className="tiny faint" style={{ marginBottom: 12 }}>
+              Replaces the browser voice with a human-quality neural voice. Add an OpenAI API key
+              and choose a voice — <em>Onyx</em> is best for hypnosis. Key stays on this device,
+              sent only to api.openai.com.
+            </p>
+            <label className="field">
+              <span>OpenAI API key</span>
+              <input
+                type="password"
+                value={settings.openai_api_key}
+                placeholder="sk-…"
+                onChange={(e) => set({ openai_api_key: e.target.value })}
+              />
+            </label>
+            {settings.openai_api_key && <p className="tiny" style={{ marginTop: 6, color: 'var(--accent)' }}>Key saved. Select "OpenAI TTS" in Delivery → Voice engine to use it.</p>}
+          </div>
+
+          {/* Anthropic — coach + session generation */}
+          <div className="card" style={{ marginTop: 12 }}>
+            <p className="small" style={{ marginBottom: 4 }}><strong>AI coach + session generation (Anthropic)</strong></p>
+            <p className="tiny faint" style={{ marginBottom: 12 }}>
+              Enables a real conversational coach and AI-written session scripts.
+              Key stays on this device, sent only to api.anthropic.com.
+            </p>
+            <label className="field">
+              <span>Anthropic API key</span>
+              <input
+                type="password"
+                value={keyDraft}
+                placeholder="sk-ant-…"
+                onChange={(e) => { setKeyDraft(e.target.value); setKeyStatus('idle'); }}
+              />
+            </label>
+            <div className="row" style={{ marginTop: 12, gap: 8 }}>
+              <button className="btn btn-ghost btn-sm" onClick={testKey} disabled={keyStatus === 'testing' || !keyDraft.trim()}>
+                {keyStatus === 'testing' ? 'Testing…' : 'Test & save'}
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={saveKey} disabled={!keyDraft.trim()}>
+                Save without testing
+              </button>
+              {settings.ai_api_key && (
+                <button className="btn btn-ghost btn-sm" onClick={() => { setKeyDraft(''); set({ ai_api_key: '' }); setKeyStatus('idle'); }}>
+                  Remove
+                </button>
+              )}
+            </div>
+            {keyStatus === 'ok' && <p className="tiny" style={{ marginTop: 8, color: 'var(--accent)' }}>Key works — AI features are now active.</p>}
+            {keyStatus === 'fail' && <p className="tiny" style={{ marginTop: 8, color: 'var(--danger, #ff6b6b)' }}>Connection failed — check the key and try again.</p>}
+            {settings.ai_api_key && keyStatus === 'idle' && (
+              <p className="tiny faint" style={{ marginTop: 8 }}>Key saved. AI features active.</p>
+            )}
+          </div>  {/* Anthropic card */}
         </section>
 
         {/* ---------- data ---------- */}

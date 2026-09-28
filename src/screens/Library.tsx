@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import type { Launcher } from '../App';
 import type { Entry, SessionType } from '../types';
-import { getProfile } from '../db';
+import { getProfile, getSettings } from '../db';
 import { composeSession } from '../lib/compose';
+import { generateAISession } from '../lib/aiSession';
 import { ENTRIES, SESSION_TYPES, SESSION_TYPE_META, sourceOf } from '../lib/content';
 import { Sheet } from '../components/ui';
 
@@ -107,7 +109,11 @@ export function SessionSetup({ type, ctx, onClose }: { type: SessionType; ctx: L
   const [minutes, setMinutes] = useState(meta.defaultMinutes);
   const [focus, setFocus] = useState('');
   const [belief, setBelief] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const needsBelief = type === 'ftl-deletion' || type === 'fear-screen';
+  const settings = useLiveQuery(() => getSettings(), [], undefined);
+  const hasKey = !!settings?.ai_api_key;
 
   const start = async () => {
     const profile = await getProfile();
@@ -120,6 +126,29 @@ export function SessionSetup({ type, ctx, onClose }: { type: SessionType; ctx: L
     });
     onClose();
     ctx.launch(plan);
+  };
+
+  const startAI = async () => {
+    if (!settings?.ai_api_key) return;
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const profile = await getProfile();
+      const plan = await generateAISession({
+        sessionType: type,
+        targetMinutes: minutes,
+        facts: profile.facts,
+        focus: focus.trim() || undefined,
+        belief: belief.trim() || undefined,
+        apiKey: settings.ai_api_key,
+      });
+      onClose();
+      ctx.launch(plan);
+    } catch (err) {
+      setAiError((err as Error).message);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   return (
@@ -148,10 +177,31 @@ export function SessionSetup({ type, ctx, onClose }: { type: SessionType; ctx: L
           <input type="text" value={focus} onChange={(e) => setFocus(e.target.value)} placeholder="e.g. finish the proposal without stalling" />
         </label>
 
-        <button className="btn btn-block" onClick={start}>Preview the session</button>
-        <p className="tiny faint" style={{ textAlign: 'center' }}>
-          You'll see every suggestion before anything starts.
-        </p>
+        {aiError && <p className="notice" style={{ color: 'var(--danger, #ff6b6b)' }}>{aiError}</p>}
+
+        {hasKey && (
+          <button className="btn btn-block" onClick={startAI} disabled={aiLoading}>
+            {aiLoading ? 'Writing your session…' : 'Generate with AI'}
+          </button>
+        )}
+
+        <button
+          className={hasKey ? 'btn btn-ghost btn-block' : 'btn btn-block'}
+          onClick={start}
+          disabled={aiLoading}
+        >
+          Preview the session
+        </button>
+
+        {hasKey ? (
+          <p className="tiny faint" style={{ textAlign: 'center' }}>
+            AI writes a personalised script. Preview shows the curated library version.
+          </p>
+        ) : (
+          <p className="tiny faint" style={{ textAlign: 'center' }}>
+            You'll see every suggestion before anything starts.
+          </p>
+        )}
       </div>
     </Sheet>
   );
