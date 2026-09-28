@@ -145,10 +145,8 @@ export interface Settings {
   openai_api_key: string;
   /** OpenAI TTS voice ID */
   openai_voice: string;
-  /** Which TTS engine to use: kokoro (local AI), openai (cloud), or browser (system) */
-  voice_engine: 'kokoro' | 'openai' | 'browser';
-  /** Kokoro voice ID */
-  kokoro_voice: string;
+  /** Which TTS engine to use: openai (cloud) or browser (system) */
+  voice_engine: 'openai' | 'browser';
 }
 
 export interface QueuedSession {

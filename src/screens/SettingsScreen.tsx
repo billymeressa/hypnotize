@@ -3,7 +3,6 @@ import type { Settings, RoutineItem } from '../types';
 import { saveSettings } from '../db';
 import { callClaude } from '../lib/ai';
 import { bestVoiceUri, listVoicesSorted, onVoicesReady, OPENAI_VOICES, scoreVoice, speak, stopSpeaking, ttsSupported, voiceQualityLabel } from '../lib/tts';
-import { KOKORO_VOICES, kokoroReady, loadKokoro, type LoadProgress } from '../lib/kokoroTts';
 import { startAmbient, stopAmbient } from '../lib/ambient';
 import { activeReminders, inQuietHours, requestPermission, scheduleToday } from '../lib/reminders';
 import { downloadExport, eraseAll, importBackup } from '../lib/backup';
@@ -14,8 +13,6 @@ export default function SettingsScreen({ settings }: { settings: Settings }) {
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [keyDraft, setKeyDraft] = useState(settings.ai_api_key);
   const [keyStatus, setKeyStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
-  const [kokoroStatus, setKokoroStatus] = useState<'idle' | 'loading' | 'ready' | 'fail'>(kokoroReady() ? 'ready' : 'idle');
-  const [kokoroProgress, setKokoroProgress] = useState<LoadProgress | null>(null);
   const file = useRef<HTMLInputElement>(null);
 
   useEffect(() => onVoicesReady(() => setVoices(listVoicesSorted())), []);
@@ -73,70 +70,13 @@ export default function SettingsScreen({ settings }: { settings: Settings }) {
                 <label className="field">
                   <span>Voice engine</span>
                   <select
-                    value={settings.voice_engine ?? 'kokoro'}
+                    value={settings.voice_engine ?? 'browser'}
                     onChange={(e) => set({ voice_engine: e.target.value as Settings['voice_engine'] })}
                   >
-                    <option value="kokoro">Free AI voice (Kokoro — runs in browser)</option>
-                    <option value="openai">OpenAI TTS (key required)</option>
+                    <option value="openai">OpenAI TTS — neural voice (key required)</option>
                     <option value="browser">Browser / system voice</option>
                   </select>
                 </label>
-
-                {/* Kokoro options */}
-                {(settings.voice_engine ?? 'kokoro') === 'kokoro' && (
-                  <div className="stack">
-                    <label className="field">
-                      <span>Kokoro voice</span>
-                      <select
-                        value={settings.kokoro_voice || 'am_adam'}
-                        onChange={(e) => set({ kokoro_voice: e.target.value })}
-                      >
-                        {KOKORO_VOICES.map((v) => (
-                          <option key={v.id} value={v.id}>{v.label}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <div className="row" style={{ gap: 8 }}>
-                      {kokoroStatus !== 'ready' && (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          disabled={kokoroStatus === 'loading'}
-                          onClick={() => {
-                            setKokoroStatus('loading');
-                            setKokoroProgress(null);
-                            loadKokoro((p) => setKokoroProgress(p))
-                              .then(() => { setKokoroStatus('ready'); setKokoroProgress(null); })
-                              .catch(() => setKokoroStatus('fail'));
-                          }}
-                        >
-                          {kokoroStatus === 'loading' ? 'Downloading model…' : 'Load AI voice model (~82 MB)'}
-                        </button>
-                      )}
-                      {kokoroStatus === 'ready' && (
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => speak(
-                            'Let your eyes close... and with every breath out, feel yourself settling a little deeper. There is nothing you need to do right now, and nowhere else to be.',
-                            { rate: settings.tts_rate, voiceUri: null, engine: 'kokoro', kokoroVoice: settings.kokoro_voice || 'am_adam' },
-                          )}
-                        >
-                          Hear it
-                        </button>
-                      )}
-                    </div>
-                    {kokoroStatus === 'loading' && kokoroProgress && (
-                      <p className="tiny faint">
-                        {kokoroProgress.name ?? kokoroProgress.status}
-                        {kokoroProgress.progress != null && ` — ${Math.round(kokoroProgress.progress)}%`}
-                      </p>
-                    )}
-                    {kokoroStatus === 'ready' && <p className="tiny" style={{ color: 'var(--accent)' }}>Model ready.</p>}
-                    {kokoroStatus === 'fail' && <p className="tiny" style={{ color: 'var(--danger,#f55)' }}>Download failed — check your connection and try again.</p>}
-                    {kokoroStatus === 'idle' && (
-                      <p className="tiny faint">Model downloads once (~82 MB) and is then cached on this device. Sessions won't start until it's loaded — you can also let the first session trigger it automatically.</p>
-                    )}
-                  </div>
-                )}
 
                 {/* OpenAI voice options */}
                 {settings.voice_engine === 'openai' && settings.openai_api_key && (

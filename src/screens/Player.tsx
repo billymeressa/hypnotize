@@ -50,8 +50,7 @@ export default function Player({
         rate: settings.tts_rate,
         voiceUri: settings.tts_voice_uri,
         onEnd: advance,
-        engine: settings.voice_engine ?? 'kokoro',
-        kokoroVoice: settings.kokoro_voice || 'am_adam',
+        engine: settings.voice_engine ?? 'browser',
         openaiKey: settings.openai_api_key || undefined,
         openaiVoice: (settings.openai_voice || 'onyx') as import('../lib/tts').OpenAIVoice,
       });

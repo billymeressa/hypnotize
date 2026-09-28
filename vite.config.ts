@@ -2,14 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-/**
- * BASE_PATH lets the same build serve from a domain root ("/") or a GitHub Pages
- * project subpath ("/hypnotize/"). The deploy workflow sets it; local dev uses "/".
- */
-const base = process.env.BASE_PATH ?? '/';
-
 export default defineConfig({
-  base,
+  base: '/',
   plugins: [
     react(),
     VitePWA({
@@ -43,12 +37,11 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2,png}'],
-        navigateFallback: `${base}index.html`,
+        navigateFallback: '/index.html',
         cleanupOutdatedCaches: true,
       },
       devOptions: { enabled: false },
     }),
   ],
   server: { port: 5175, host: true },
-  optimizeDeps: { exclude: ['@huggingface/transformers'] },
 });

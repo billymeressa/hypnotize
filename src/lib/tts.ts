@@ -172,11 +172,9 @@ export interface SpeakOpts {
   rate: number;
   voiceUri: string | null;
   onEnd?: () => void;
-  engine?: 'kokoro' | 'openai' | 'browser';
-  kokoroVoice?: string;
+  engine?: 'openai' | 'browser';
   openaiKey?: string;
   openaiVoice?: OpenAIVoice;
-  onKokoroProgress?: (p: { status: string; progress?: number }) => void;
 }
 
 export function speak(text: string, opts: SpeakOpts) {
@@ -189,18 +187,6 @@ export function speak(text: string, opts: SpeakOpts) {
       speed: Math.max(0.25, Math.min(4.0, opts.rate * 0.75)),
       onEnd: opts.onEnd,
     });
-    return;
-  }
-
-  if (engine === 'kokoro') {
-    void import('./kokoroTts').then(({ speakKokoro }) =>
-      speakKokoro(text, {
-        voice: (opts.kokoroVoice ?? 'am_adam') as import('./kokoroTts').KokoroVoice,
-        speed: Math.max(0.5, Math.min(2.0, opts.rate * 0.9)),
-        onEnd: opts.onEnd,
-        onProgress: opts.onKokoroProgress,
-      }),
-    );
     return;
   }
 
@@ -239,5 +225,4 @@ export function stopSpeaking() {
   stopKeepAlive();
   if (_currentAudio) { _currentAudio.pause(); _currentAudio = null; }
   if (ttsSupported()) speechSynthesis.cancel();
-  void import('./kokoroTts').then(({ stopKokoro }) => stopKokoro()).catch(() => {});
 }
