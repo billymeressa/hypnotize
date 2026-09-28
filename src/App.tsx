@@ -18,6 +18,7 @@ import Influence from './screens/Influence';
 import Views from './screens/Views';
 import About from './screens/About';
 import { scheduleToday } from './lib/reminders';
+import AppUpdates from './components/AppUpdates';
 
 export interface Launcher { launch: (plan: SessionPlan) => void; go: (r: Route) => void }
 
@@ -60,6 +61,7 @@ export default function App() {
       {route === 'about' && <About />}
 
       <Nav route={tab} go={go} />
+      <AppUpdates sessionOpen={plan !== null} />
 
       {plan && (
         <Player

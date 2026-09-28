@@ -4,6 +4,7 @@ import { db, today, uid } from '../db';
 import { speak, stopSpeaking, ttsSupported } from '../lib/tts';
 import { startAmbient, stopAmbient } from '../lib/ambient';
 import { PACE_WPS } from '../lib/compose';
+import { keepAwake, releaseAwake, trapBack } from '../lib/platform';
 import { Glow, Mood, Wave, mins } from '../components/ui';
 
 type Phase = 'preview' | 'mood-before' | 'playing' | 'mood-after' | 'done';
@@ -63,7 +64,18 @@ export default function Player({
     return stopAmbient;
   }, [phase, settings.ambient, settings.ambient_volume]);
 
+  // Hold the screen awake for the whole session, not just the script: the mood steps sit on
+  // screen while the user decides, and a sleeping screen there kills the session too.
+  useEffect(() => {
+    void keepAwake();
+    return () => { void releaseAwake(); };
+  }, []);
+
   useEffect(() => () => { stopSpeaking(); stopAmbient(); }, []);
+
+  // Android's back gesture must mean "stop the session", never "close the app".
+  const stopRef = useRef<() => void>(() => {});
+  useEffect(() => trapBack(() => stopRef.current()), []);
 
   const begin = () => {
     startedAt.current = Date.now();
@@ -101,6 +113,8 @@ export default function Player({
     await record(true);
     setPhase('done');
   };
+
+  stopRef.current = stop;
 
   const StopButton = (
     <button className="stop" onClick={stop}>

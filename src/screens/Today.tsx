@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Launcher } from '../App';
 import type { Completion, RoutineItem, Settings } from '../types';
@@ -8,6 +8,7 @@ import { entry, SESSION_TYPE_META } from '../lib/content';
 import type { SessionType } from '../types';
 import { Glow, Sheet, Mood } from '../components/ui';
 import ScrollSwap from './ScrollSwap';
+import { hashParams } from '../routes';
 
 const slotOf = (d = new Date()): 'morning' | 'midday' | 'evening' => {
   const h = d.getHours();
@@ -24,6 +25,14 @@ export default function Today({ ctx, settings }: { ctx: Launcher; settings: Sett
   const queued = useLiveQuery(() => db.queue.toArray(), [], []);
   const [openItem, setOpenItem] = useState<RoutineItem | null>(null);
   const [scrollSwap, setScrollSwap] = useState(false);
+
+  // Launcher shortcut: long-press the icon -> "I want to scroll" opens straight into the swap.
+  useEffect(() => {
+    if (hashParams().get('swap') === '1') {
+      setScrollSwap(true);
+      history.replaceState(null, '', '#/today');
+    }
+  }, []);
   const [checkin, setCheckin] = useState(false);
 
   const items = settings.routine.filter((r) => r.enabled);

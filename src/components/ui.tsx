@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import { trapBack } from '../lib/platform';
 
 export function Glow({ small }: { small?: boolean }) {
   return (
@@ -51,7 +52,9 @@ export function Sheet({ children, onClose, title }: { children: ReactNode; onClo
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', esc);
-    return () => document.removeEventListener('keydown', esc);
+    // Android back closes the sheet rather than leaving the screen behind it.
+    const untrap = trapBack(onClose);
+    return () => { document.removeEventListener('keydown', esc); untrap(); };
   }, [onClose]);
   return (
     <div className="sheet-backdrop" onClick={onClose}>

@@ -1,8 +1,10 @@
+import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Launcher } from '../App';
 import { db } from '../db';
 import { CONTENT_STATS } from '../lib/content';
 import { Glow } from '../components/ui';
+import { isStandalone, onInstallAvailable, promptInstall } from '../lib/platform';
 
 const LINKS = [
   { route: 'progress', label: 'Progress', blurb: 'Streak, minutes, mood trend' },
@@ -16,6 +18,10 @@ const LINKS = [
 
 export default function More({ ctx }: { ctx: Launcher }) {
   const facts = useLiveQuery(async () => (await db.profile.get('me'))?.facts.length ?? 0, [], 0);
+  const [canInstall, setCanInstall] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => onInstallAvailable(setCanInstall), []);
+  const showInstall = canInstall && !dismissed && !isStandalone();
 
   return (
     <div className="screen">
@@ -26,6 +32,30 @@ export default function More({ ctx }: { ctx: Launcher }) {
           {CONTENT_STATS.approved} approved library entries · {facts} profile facts
         </p>
       </div>
+
+      {showInstall && (
+        <div className="card stack" style={{ marginBottom: 18 }}>
+          <div>
+            <div className="item-title">Install to your home screen</div>
+            <p className="small dim" style={{ margin: '6px 0 0' }}>
+              Runs full-screen and works offline. Nothing changes about where your data lives — it
+              stays on this device either way.
+            </p>
+          </div>
+          <div className="row">
+            <button
+              className="btn btn-sm"
+              onClick={async () => {
+                const outcome = await promptInstall();
+                if (outcome !== 'accepted') setDismissed(true);
+              }}
+            >
+              Install
+            </button>
+            <button className="btn-text" onClick={() => setDismissed(true)}>Not now</button>
+          </div>
+        </div>
+      )}
 
       <div className="stack">
         {LINKS.map((l) => (

@@ -11,8 +11,48 @@ npm run dev      # http://localhost:5175
 Other scripts: `npm run build` (production + service worker), `npm run content` (validate and
 regenerate the library), `npm run content:check` (validate only), `npm run typecheck`.
 
-To install it on a phone: serve the build over HTTPS or over your LAN, open it in the phone's
-browser, and use Add to Home Screen.
+Other scripts: `npm run icons` regenerates the app icons from `scripts/make-icons.mjs`.
+
+## Getting it on the phone (Android)
+
+The app is deployed by **GitHub Actions on every push to `main`** (`.github/workflows/deploy.yml`):
+it installs, validates the content, builds with the right base path, and publishes to GitHub Pages.
+
+```bash
+git push          # that's the whole deploy
+```
+
+On the phone: open the Pages URL in Chrome → the More tab shows an **Install** button (or use
+Chrome's ⋮ → Add to Home Screen). After that it runs full-screen from the launcher and works with
+no connection.
+
+**Improving it afterwards:** edit, commit, push. The installed app notices the new version on next
+launch and shows a "newer version is ready" banner — it never swaps itself out mid-session
+(`registerType: 'prompt'`). Your data is untouched by updates; it lives in IndexedDB, keyed to the
+origin, not in the app bundle.
+
+### What was done to make it behave like an app rather than a web page
+
+- **Real icons** — 192/512 PNGs plus maskable variants drawn inside Android's 80% safe zone, so the
+  launcher can crop to a circle without clipping the mark (`scripts/make-icons.mjs`).
+- **Screen wake lock** for the whole session, including the mood steps. Without it the phone dims
+  mid-script and Android suspends speech synthesis (`src/lib/platform.ts`).
+- **Back gesture = Stop**, not "close the app". The player and every sheet push a history entry so
+  the system back button does the sensible thing (`trapBack`).
+- **Launcher shortcuts** — long-press the icon for Morning session, Change Coach, or "I want to
+  scroll" straight into the swap.
+- **Install prompt on our terms** — `beforeinstallprompt` is captured so Chrome's mini-infobar
+  doesn't interrupt; the offer lives in the More tab instead.
+
+### Verified, and not
+
+Built and exercised end to end in a desktop browser: session flow, Coach → profile → generated
+session, journal, export, subpath build, manifest and precache manifest (11 assets, relative URLs).
+
+**Not verified from here:** service-worker registration and true offline mode — the browser used
+for checking has service workers disabled, and a one-line test worker fails there too. The
+registration code and precache list are correct by inspection, but the first real test is the phone:
+install it, turn on airplane mode, and open it from the launcher.
 
 ---
 
