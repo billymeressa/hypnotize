@@ -15,6 +15,9 @@ Other scripts: `npm run icons` regenerates the app icons from `scripts/make-icon
 
 ## Getting it on the phone (Android)
 
+**Live at: https://billymeressa.github.io/hypnotize/**
+
+
 The app is deployed by **GitHub Actions on every push to `main`** (`.github/workflows/deploy.yml`):
 it installs, validates the content, builds with the right base path, and publishes to GitHub Pages.
 
@@ -22,7 +25,7 @@ it installs, validates the content, builds with the right base path, and publish
 git push          # that's the whole deploy
 ```
 
-On the phone: open the Pages URL in Chrome → the More tab shows an **Install** button (or use
+On the phone: open that URL in Chrome → the More tab shows an **Install** button (or use
 Chrome's ⋮ → Add to Home Screen). After that it runs full-screen from the launcher and works with
 no connection.
 
