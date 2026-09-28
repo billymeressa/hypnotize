@@ -1,43 +1,21 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, today, uid } from '../db';
-import { ofType } from '../lib/content';
 import type { JournalEntry } from '../types';
 import { Sheet } from '../components/ui';
 
 export default function Journal() {
   const entries = useLiveQuery(() => db.journal.orderBy('created_at').reverse().toArray(), [], []);
   const [open, setOpen] = useState<JournalEntry | 'new' | null>(null);
-  const prompts = ofType('prompt');
 
   return (
     <div className="screen">
       <div className="head">
         <h1>Journal</h1>
-        <p>Private, on this device. Nothing here is analysed or scored.</p>
+        <p>Private notes, on this device only.</p>
       </div>
 
       <button className="btn btn-block" onClick={() => setOpen('new')}>Write something</button>
-
-      {prompts.length > 0 && (
-        <div className="stack" style={{ marginTop: 26 }}>
-          <p className="eyebrow">Or answer a prompt</p>
-          <div className="scroll-x">
-            {prompts.map((p) => (
-              <button
-                key={p.key}
-                className="chip"
-                onClick={() => setOpen({
-                  id: uid(), date: today(), prompt: p.title, text: '',
-                  created_at: Date.now(), updated_at: Date.now(), linked_ref: p.key,
-                })}
-              >
-                {p.title}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="stack" style={{ marginTop: 30 }}>
         {entries.length === 0 && <p className="empty-state">Nothing written yet.</p>}
@@ -68,10 +46,9 @@ export default function Journal() {
 
 function Editor({ entry, onClose }: { entry: JournalEntry; onClose: () => void }) {
   const [text, setText] = useState(entry.text);
-  const promptBody = entry.prompt;
 
   return (
-    <Sheet title={promptBody ?? 'Journal'} onClose={onClose}>
+    <Sheet title="Journal" onClose={onClose}>
       <div className="stack-lg">
         <textarea
           autoFocus

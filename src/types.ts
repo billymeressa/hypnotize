@@ -107,9 +107,8 @@ export interface JournalEntry {
 export interface RoutineItem {
   id: string;
   slot: 'morning' | 'midday' | 'evening';
-  kind: 'session' | 'practice' | 'prompt' | 'checkin';
+  kind: 'session';
   title: string;
-  /** For sessions: the session type to compose. For practices/prompts: an entry key. */
   ref: string;
   minutes: number;
   enabled: boolean;

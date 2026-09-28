@@ -140,16 +140,15 @@ export default function SettingsScreen({ settings }: { settings: Settings }) {
 
         {/* ---------- routine ---------- */}
         <section>
-          <p className="eyebrow">Daily set</p>
+          <p className="eyebrow">Daily sessions</p>
           <p className="tiny faint" style={{ marginTop: 6 }}>
-            {enabledCount} items on. Keep it between five and ten — a set that can't be finished stops
-            being a set.
+            {enabledCount} active. Toggle any session off to skip it from your Today tab.
           </p>
           <div className="card" style={{ marginTop: 12 }}>
             {settings.routine.map((r) => (
               <Toggle
                 key={r.id}
-                label={`${r.title} · ${r.slot}`}
+                label={`${r.title} · ${r.slot} · ${r.minutes} min`}
                 on={r.enabled}
                 onChange={() => toggleRoutine(r)}
               />

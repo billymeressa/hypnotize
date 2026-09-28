@@ -14,8 +14,6 @@ import More from './screens/More';
 import Profile from './screens/Profile';
 import SettingsScreen from './screens/SettingsScreen';
 import Toolkits from './screens/Toolkits';
-import Influence from './screens/Influence';
-import Views from './screens/Views';
 import About from './screens/About';
 import { scheduleToday } from './lib/reminders';
 import AppUpdates from './components/AppUpdates';
@@ -43,7 +41,7 @@ export default function App() {
 
   const tab: Route = ['today', 'library', 'coach', 'journal', 'more'].includes(route)
     ? route
-    : route === 'progress' || route === 'profile' ? 'more' : 'more';
+    : 'more';
 
   return (
     <div className="app">
@@ -56,8 +54,6 @@ export default function App() {
       {route === 'profile' && <Profile ctx={ctx} />}
       {route === 'settings' && <SettingsScreen settings={settings} />}
       {route === 'toolkits' && <Toolkits ctx={ctx} />}
-      {route === 'influence' && <Influence />}
-      {route === 'views' && <Views />}
       {route === 'about' && <About />}
 
       <Nav route={tab} go={go} />

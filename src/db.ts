@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie';
 import type {
-  Profile, ChatMessage, Completion, JournalEntry, Settings, SessionPlan, QueuedSession,
+  Profile, ChatMessage, Completion, JournalEntry, Settings, SessionPlan, QueuedSession, RoutineItem,
 } from './types';
 
 /**
@@ -34,6 +34,15 @@ class HypnotizeDB extends Dexie {
         await tx.table('settings').update('settings', { tts_enabled: true });
       }
     });
+    // v3: strip checkin/practice/prompt items from the routine; replace with sessions-only defaults.
+    this.version(3).stores({}).upgrade(async (tx) => {
+      const s = await tx.table('settings').get('settings');
+      if (!s) return;
+      const sessionItems = (s.routine as RoutineItem[]).filter((r) => r.kind === 'session');
+      if (sessionItems.length < s.routine.length) {
+        await tx.table('settings').update('settings', { routine: DEFAULT_ROUTINE });
+      }
+    });
   }
 }
 
@@ -46,6 +55,12 @@ export const today = (d = new Date()) => {
 
 export const uid = () =>
   `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+
+export const DEFAULT_ROUTINE: RoutineItem[] = [
+  { id: 'ri-morning', slot: 'morning', kind: 'session', title: 'Morning session',       ref: 'morning-rehearsal', minutes: 8,  enabled: true },
+  { id: 'ri-midday',  slot: 'midday',  kind: 'session', title: 'Midday re-centre',      ref: 'focus-flow',        minutes: 5,  enabled: true },
+  { id: 'ri-sleep',   slot: 'evening', kind: 'session', title: 'Pre-sleep session',     ref: 'pre-sleep',         minutes: 10, enabled: true },
+];
 
 export const DEFAULT_SETTINGS: Settings = {
   id: 'settings',
@@ -68,14 +83,7 @@ export const DEFAULT_SETTINGS: Settings = {
     { id: 'r-mid3', slot: 'midday', time: '17:00', text: 'One ad filter.', enabled: true },
     { id: 'r-evening', slot: 'evening', time: '22:00', text: 'Wind down.', enabled: true },
   ],
-  routine: [
-    { id: 'ri-morning', slot: 'morning', kind: 'session', title: 'Morning induction + day rehearsal', ref: 'morning-rehearsal', minutes: 8, enabled: true },
-    { id: 'ri-lang', slot: 'midday', kind: 'practice', title: 'Language check', ref: 'original-starter/language-swap', minutes: 2, enabled: true },
-    { id: 'ri-checkin', slot: 'midday', kind: 'checkin', title: 'Short check-in', ref: 'checkin', minutes: 1, enabled: true },
-    { id: 'ri-ad', slot: 'midday', kind: 'practice', title: 'Ad filter', ref: 'original-starter/ad-filter', minutes: 2, enabled: false },
-    { id: 'ri-journal', slot: 'evening', kind: 'prompt', title: 'Reflection', ref: 'original-starter/prompt-identity-gap', minutes: 3, enabled: true },
-    { id: 'ri-sleep', slot: 'evening', kind: 'session', title: 'Pre-sleep programming', ref: 'pre-sleep', minutes: 10, enabled: true },
-  ],
+  routine: DEFAULT_ROUTINE,
 };
 
 /** Read-only: safe to call from a liveQuery. Missing records fall back to defaults. */

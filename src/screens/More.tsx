@@ -2,18 +2,15 @@ import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Launcher } from '../App';
 import { db } from '../db';
-import { CONTENT_STATS } from '../lib/content';
 import { Glow } from '../components/ui';
 import { isStandalone, onInstallAvailable, promptInstall } from '../lib/platform';
 
 const LINKS = [
-  { route: 'progress', label: 'Progress', blurb: 'Streak, minutes, mood trend' },
+  { route: 'progress', label: 'Progress', blurb: 'Streak, session history, mood trend' },
   { route: 'profile', label: 'Profile', blurb: 'What the Guide knows about you' },
-  { route: 'toolkits', label: 'Toolkits', blurb: 'Short tools for a specific moment' },
-  { route: 'influence', label: 'Influence literacy', blurb: 'How suggestion works, including here' },
-  { route: 'views', label: "Teacher's views", blurb: 'Source claims, kept separate' },
+  { route: 'toolkits', label: 'Quick sessions', blurb: 'Targeted sessions for a specific moment' },
   { route: 'settings', label: 'Settings', blurb: 'Voice, pace, reminders, your data' },
-  { route: 'about', label: 'About', blurb: 'What this is and is not' },
+  { route: 'about', label: 'About', blurb: 'Sources and safety information' },
 ] as const;
 
 export default function More({ ctx }: { ctx: Launcher }) {
@@ -28,8 +25,8 @@ export default function More({ ctx }: { ctx: Launcher }) {
       <div className="head">
         <Glow small />
         <h1 style={{ marginTop: 20, textAlign: 'center' }}>Hypnotize</h1>
-        <p style={{ textAlign: 'center' }}>
-          {CONTENT_STATS.approved} approved library entries · {facts} profile facts
+        <p style={{ textAlign: 'center', marginTop: 6 }}>
+          {facts > 0 ? `${facts} things the Guide knows about you` : 'Your personal hypnosis guide'}
         </p>
       </div>
 
@@ -38,8 +35,7 @@ export default function More({ ctx }: { ctx: Launcher }) {
           <div>
             <div className="item-title">Install to your home screen</div>
             <p className="small dim" style={{ margin: '6px 0 0' }}>
-              Runs full-screen and works offline. Nothing changes about where your data lives — it
-              stays on this device either way.
+              Runs full-screen and works offline. Your data stays on this device.
             </p>
           </div>
           <div className="row">

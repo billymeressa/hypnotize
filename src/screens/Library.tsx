@@ -6,7 +6,7 @@ import { composeSession } from '../lib/compose';
 import { ENTRIES, SESSION_TYPES, SESSION_TYPE_META, sourceOf } from '../lib/content';
 import { Sheet } from '../components/ui';
 
-type Filter = 'sessions' | 'reading' | 'practices' | 'prompts';
+type Filter = 'sessions' | 'principles';
 const LENGTHS = [3, 5, 8, 12, 20];
 
 export default function Library({ ctx }: { ctx: Launcher }) {
@@ -15,31 +15,31 @@ export default function Library({ ctx }: { ctx: Launcher }) {
   const [setup, setSetup] = useState<SessionType | null>(null);
   const [reading, setReading] = useState<Entry | null>(null);
 
-  const typeFor: Record<Filter, Entry['type'][]> = {
-    sessions: [], reading: ['principle'], practices: ['practice'], prompts: ['prompt'],
-  };
+  const principles = useMemo(() => ENTRIES.filter((e) => e.type === 'principle'), []);
 
   const visibleTags = useMemo(() => {
-    const pool = filter === 'sessions'
-      ? SESSION_TYPES.flatMap((s) => SESSION_TYPE_META[s].tags)
-      : ENTRIES.filter((e) => typeFor[filter].includes(e.type)).flatMap((e) => e.tags);
+    if (filter === 'sessions') {
+      const pool = SESSION_TYPES.flatMap((s) => SESSION_TYPE_META[s].tags);
+      return [...new Set(pool)].sort();
+    }
+    const pool = principles.flatMap((e) => e.tags);
     return [...new Set(pool)].sort();
-  }, [filter]);
+  }, [filter, principles]);
 
   const sessions = SESSION_TYPES.filter((s) => !tag || SESSION_TYPE_META[s].tags.includes(tag));
-  const entries = ENTRIES.filter((e) => typeFor[filter].includes(e.type) && (!tag || e.tags.includes(tag)));
+  const entries = principles.filter((e) => !tag || e.tags.includes(tag));
 
   return (
     <div className="screen">
       <div className="head">
-        <h1>Library</h1>
-        <p>Sessions the Guide leads, plus the reading and waking exercises behind them.</p>
+        <h1>Sessions</h1>
+        <p>Every session type the Guide can lead. Tap one to set it up.</p>
       </div>
 
       <div className="scroll-x" style={{ marginBottom: 12 }}>
-        {(['sessions', 'reading', 'practices', 'prompts'] as Filter[]).map((f) => (
+        {(['sessions', 'principles'] as Filter[]).map((f) => (
           <button key={f} className="chip" aria-pressed={filter === f} onClick={() => { setFilter(f); setTag(null); }}>
-            {f === 'reading' ? 'Principles' : f[0].toUpperCase() + f.slice(1)}
+            {f === 'principles' ? 'How it works' : 'Sessions'}
           </button>
         ))}
       </div>
@@ -59,25 +59,19 @@ export default function Library({ ctx }: { ctx: Launcher }) {
               <button key={s} className="card" onClick={() => setSetup(s)}>
                 <div className="item-title">{m.label}</div>
                 <p className="small dim" style={{ margin: '6px 0 0' }}>{m.blurb}</p>
-                <div className="meta" style={{ marginTop: 8 }}>{m.defaultMinutes} min default · {m.tags.join(' · ')}</div>
+                <div className="meta" style={{ marginTop: 8 }}>{m.defaultMinutes} min · {m.tags.join(' · ')}</div>
               </button>
             );
           })}
         </div>
       ) : (
         <div className="stack">
-          {entries.length === 0 && <p className="empty-state">Nothing approved under that tag yet.</p>}
+          {entries.length === 0 && <p className="empty-state">Nothing here yet.</p>}
           {entries.map((e) => (
             <button key={e.key} className="card" onClick={() => setReading(e)}>
-              <div className="row-between">
-                <div className="grow">
-                  <div className="item-title">{e.title}</div>
-                  <div className="meta" style={{ marginTop: 5 }}>
-                    {e.duration_sec ? `${Math.max(1, Math.round(e.duration_sec / 60))} min · ` : ''}
-                    {sourceOf(e.source_id)?.creator ?? e.source_id}
-                  </div>
-                </div>
-                {!e.hypnosis && e.type === 'practice' && <span className="badge badge-note">not hypnosis</span>}
+              <div className="item-title">{e.title}</div>
+              <div className="meta" style={{ marginTop: 5 }}>
+                {sourceOf(e.source_id)?.creator ?? e.source_id}
               </div>
             </button>
           ))}
@@ -89,9 +83,6 @@ export default function Library({ ctx }: { ctx: Launcher }) {
       {reading && (
         <Sheet title={reading.title} onClose={() => setReading(null)}>
           <div className="stack-lg">
-            {!reading.hypnosis && reading.type === 'practice' && (
-              <p className="notice">A waking exercise — no induction, no suggestions.</p>
-            )}
             <p className="serif-lead">{reading.body}</p>
             <div>
               <p className="tag">
@@ -100,7 +91,7 @@ export default function Library({ ctx }: { ctx: Launcher }) {
               </p>
               {sourceOf(reading.source_id)?.url && (
                 <a className="small" href={sourceOf(reading.source_id)!.url} target="_blank" rel="noreferrer">
-                  Open the source video
+                  Open source
                 </a>
               )}
             </div>

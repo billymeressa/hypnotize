@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Launcher } from '../App';
-import type { Completion, RoutineItem, Settings } from '../types';
-import { db, getProfile, today, uid } from '../db';
+import type { RoutineItem, Settings } from '../types';
+import { db, getProfile, today } from '../db';
 import { composeSession } from '../lib/compose';
-import { entry, SESSION_TYPE_META } from '../lib/content';
 import type { SessionType } from '../types';
-import { Sheet, Mood } from '../components/ui';
 import ScrollSwap from './ScrollSwap';
 import { hashParams } from '../routes';
 
@@ -23,19 +21,16 @@ export default function Today({ ctx, settings }: { ctx: Launcher; settings: Sett
   const date = today();
   const completions = useLiveQuery(() => db.completions.where('date').equals(date).toArray(), [date], []);
   const queued = useLiveQuery(() => db.queue.toArray(), [], []);
-  const [openItem, setOpenItem] = useState<RoutineItem | null>(null);
   const [scrollSwap, setScrollSwap] = useState(false);
 
-  // Launcher shortcut: long-press the icon -> "I want to scroll" opens straight into the swap.
   useEffect(() => {
     if (hashParams().get('swap') === '1') {
       setScrollSwap(true);
       history.replaceState(null, '', '#/today');
     }
   }, []);
-  const [checkin, setCheckin] = useState(false);
 
-  const items = settings.routine.filter((r) => r.enabled);
+  const items = settings.routine.filter((r) => r.enabled && r.kind === 'session');
   const doneRefs = new Set(completions.map((c) => c.ref));
   const isDone = (it: RoutineItem) =>
     doneRefs.has(it.id) || completions.some((c) => c.title === it.title);
@@ -47,18 +42,8 @@ export default function Today({ ctx, settings }: { ctx: Launcher; settings: Sett
   const startSession = async (sessionType: SessionType, minutes: number, itemId: string) => {
     const profile = await getProfile();
     const plan = composeSession({ sessionType, targetMinutes: minutes, facts: profile.facts });
-    plan.title = SESSION_TYPE_META[sessionType].label;
-    plan.id = itemId;    // so the routine item can be marked done
+    plan.id = itemId;
     ctx.launch(plan);
-  };
-
-  const completePractice = async (it: RoutineItem, seconds: number) => {
-    const c: Completion = {
-      id: uid(), ref: it.id, kind: it.kind === 'checkin' ? 'checkin' : it.kind,
-      title: it.title, date, started_at: Date.now() - seconds * 1000, ended_at: Date.now(),
-      seconds, finished: true,
-    };
-    await db.completions.put(c);
   };
 
   return (
@@ -68,7 +53,7 @@ export default function Today({ ctx, settings }: { ctx: Launcher; settings: Sett
         <h1 style={{ marginTop: 10 }}>{GREETING[slot]}</h1>
         <p>
           {allDone
-            ? "All done — tap any item to go again."
+            ? 'All done — tap any session to go again.'
             : slot === 'morning'
               ? 'Session first — before the phone opens anything else.'
               : `${remaining.length} left today.`}
@@ -88,19 +73,12 @@ export default function Today({ ctx, settings }: { ctx: Launcher; settings: Sett
                   <button
                     key={it.id}
                     className={`card${done ? ' done' : ''}`}
-                    onClick={() => {
-                      if (it.kind === 'session') void startSession(it.ref as SessionType, it.minutes, it.id);
-                      else if (it.kind === 'checkin') setCheckin(true);
-                      else setOpenItem(it);
-                    }}
+                    onClick={() => void startSession(it.ref as SessionType, it.minutes, it.id)}
                   >
                     <div className="row-between">
                       <div className="grow">
                         <div className="item-title">{it.title}</div>
-                        <div className="meta" style={{ marginTop: 4 }}>
-                          {it.minutes} min
-                          {it.kind !== 'session' && <> · <span className="badge badge-note" style={{ padding: '2px 6px' }}>not hypnosis</span></>}
-                        </div>
+                        <div className="meta" style={{ marginTop: 4 }}>{it.minutes} min</div>
                       </div>
                       {done && <span className="meta">done</span>}
                     </div>
@@ -133,81 +111,7 @@ export default function Today({ ctx, settings }: { ctx: Launcher; settings: Sett
         </button>
       </div>
 
-      {openItem && (
-        <Sheet title={openItem.title} onClose={() => setOpenItem(null)}>
-          <PracticeSheet
-            itemRef={openItem.ref}
-            onDone={async (sec) => { await completePractice(openItem, sec); setOpenItem(null); }}
-          />
-        </Sheet>
-      )}
-
-      {checkin && (
-        <Sheet title="Check-in" onClose={() => setCheckin(false)}>
-          <CheckinSheet
-            onDone={async (mood) => {
-              const item = items.find((i) => i.kind === 'checkin');
-              const c: Completion = {
-                id: uid(), ref: item?.id ?? 'checkin', kind: 'checkin', title: 'Check-in',
-                date, started_at: Date.now(), ended_at: Date.now(), seconds: 30,
-                finished: true, mood_after: mood,
-              };
-              await db.completions.put(c);
-              setCheckin(false);
-            }}
-          />
-        </Sheet>
-      )}
-
       {scrollSwap && <ScrollSwap ctx={ctx} onClose={() => setScrollSwap(false)} />}
-    </div>
-  );
-}
-
-function PracticeSheet({ itemRef, onDone }: { itemRef: string; onDone: (sec: number) => void }) {
-  const e = entry(itemRef);
-  const [text, setText] = useState('');
-  if (!e) return <p className="dim small">That item is no longer in the approved library.</p>;
-  const isPrompt = e.type === 'prompt';
-  return (
-    <div className="stack-lg">
-      {!e.hypnosis && (
-        <p className="notice">
-          This is a waking exercise, not a hypnosis session. No induction, no suggestions.
-        </p>
-      )}
-      <p className="serif-lead">{e.body}</p>
-      {isPrompt && (
-        <label className="field">
-          <span>Write it here — this saves to your journal</span>
-          <textarea value={text} onChange={(ev) => setText(ev.target.value)} placeholder="…" />
-        </label>
-      )}
-      <button
-        className="btn btn-block"
-        onClick={async () => {
-          if (isPrompt && text.trim()) {
-            await db.journal.put({
-              id: uid(), date: today(), prompt: e.title, text: text.trim(),
-              created_at: Date.now(), updated_at: Date.now(), linked_ref: e.key,
-            });
-          }
-          onDone(e.duration_sec || 60);
-        }}
-      >
-        Done
-      </button>
-    </div>
-  );
-}
-
-function CheckinSheet({ onDone }: { onDone: (mood: number) => void }) {
-  const [mood, setMood] = useState<number | undefined>();
-  return (
-    <div className="stack-lg">
-      <p className="serif-lead">Where are you at?</p>
-      <Mood value={mood} onChange={setMood} />
-      <button className="btn btn-block" disabled={!mood} onClick={() => onDone(mood!)}>Log it</button>
     </div>
   );
 }
