@@ -1,0 +1,13 @@
+{
+  "$comment": "Quarantine for anecdotal or unverified claims made in source videos. Never a practice, never a script, never a promised outcome. See CONTENT.md rule 5.",
+  "claims": [
+    {
+      "id": "example-income-claim",
+      "source_id": "original-starter",
+      "timestamp": "",
+      "claim": "Placeholder showing the required shape: a teacher states that a single session produced a specific large income change within weeks.",
+      "evidence_note": "Example record only — no real source yet. When a real claim lands here: state plainly that this is one person's account, that no controlled evidence is offered, and that outcomes like income depend on factors hypnosis does not control. Replace this placeholder once the first transcript is processed.",
+      "status": "draft"
+    }
+  ]
+}

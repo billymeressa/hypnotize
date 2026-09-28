@@ -1,0 +1,33 @@
+{
+  "id": "vid-0001-example",
+  "title": "EXAMPLE FILE — replace with the first real transcript",
+  "url": "https://www.youtube.com/watch?v=REPLACE_ME",
+  "creator": "Source channel name",
+  "date_added": "2026-09-28",
+  "notes": "Demonstrates the shape a real extraction takes, including a conflict flag. Every entry is draft, so none of this reaches the app. Delete this file once a real source exists.",
+  "entries": [
+    {
+      "id": "eye-fixation-with-breath-count",
+      "type": "script",
+      "stage": "open",
+      "title": "Eye fixation with a breath count",
+      "body": "Rest your eyes on one point and count three breaths out before letting the eyelids close.",
+      "duration_sec": 60,
+      "tags": ["induction", "attention"],
+      "timestamp": "02:14",
+      "status": "draft",
+      "session_types": ["morning-rehearsal"],
+      "notes": "CONFLICT: overlaps original-starter/eye-fixation-open. This version adds a breath count. Reviewer: merge into the existing entry or drop this one."
+    },
+    {
+      "id": "state-before-strategy",
+      "type": "principle",
+      "title": "State before strategy",
+      "body": "The claim is that changing how you feel first makes the tactic work, and that most people try the tactic from a state that undermines it.",
+      "duration_sec": 0,
+      "tags": ["identity"],
+      "timestamp": "07:41",
+      "status": "draft"
+    }
+  ]
+}

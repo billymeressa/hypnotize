@@ -1,0 +1,491 @@
+{
+  "id": "original-starter",
+  "title": "Original starter set (authored for the app, not extracted from any video)",
+  "url": "",
+  "creator": "Hypnotize (original)",
+  "date_added": "2026-09-28",
+  "notes": "This file is NOT a transcript extraction. It exists so the app has approved content to run against before any video is processed. Real sources go in their own vid-NNNN-slug.json files and start as draft.",
+  "entries": [
+    {
+      "id": "eye-fixation-open",
+      "type": "script",
+      "stage": "open",
+      "title": "Eye fixation open",
+      "body": "Find one small point in front of you and let your eyes rest there. You don't have to stare hard. Just let that point be the only thing your eyes are doing. Everything else in the room can stay where it is. As you keep looking, notice your eyelids getting a little heavier with each breath out. When they want to close, let them.",
+      "duration_sec": 70,
+      "tags": [
+        "induction",
+        "attention",
+        "morning",
+        "evening"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "morning-rehearsal",
+        "act-as-if",
+        "fear-screen",
+        "ftl-deletion",
+        "pre-sleep",
+        "focus-flow",
+        "goal-clarity",
+        "habit-craving"
+      ]
+    },
+    {
+      "id": "pattern-interrupt-open",
+      "type": "script",
+      "stage": "open",
+      "title": "Pattern interrupt open",
+      "body": "Stop for a second. Whatever you were about to think next, set it down mid-sentence. Take one breath that is deliberately slower than the one before it. Notice that the rush you walked in with is not actually urgent right now. Nothing needs solving in the next few minutes. That gap you just felt is where we start.",
+      "duration_sec": 50,
+      "tags": [
+        "induction",
+        "attention",
+        "focus",
+        "morning"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "morning-rehearsal",
+        "focus-flow",
+        "habit-craving",
+        "act-as-if"
+      ]
+    },
+    {
+      "id": "progressive-relaxation-deepener",
+      "type": "script",
+      "stage": "deepen",
+      "title": "Progressive relaxation deepener",
+      "body": "Start at the top of your head and let it soften. Forehead. Around the eyes. Jaw — let the jaw hang slightly, most people hold it without noticing. Shoulders down. Arms heavy. Chest. Stomach unclenching. Hips. Legs. Feet. Anywhere you find tension, don't fight it — just breathe out and let it be a little less than it was.",
+      "duration_sec": 120,
+      "tags": [
+        "deepening",
+        "sleep",
+        "evening"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "morning-rehearsal",
+        "act-as-if",
+        "fear-screen",
+        "ftl-deletion",
+        "pre-sleep",
+        "goal-clarity",
+        "habit-craving"
+      ]
+    },
+    {
+      "id": "staircase-deepener",
+      "type": "script",
+      "stage": "deepen",
+      "title": "Ten-step descent",
+      "body": "Picture ten steps going down to somewhere quiet. I'll count you down them. With each number, let yourself drop a little further into this. Ten. Nine — heavier. Eight. Seven — the outside getting further away. Six. Five — halfway, and comfortable. Four. Three. Two. One. You're at the bottom now, and it's still.",
+      "duration_sec": 100,
+      "tags": [
+        "deepening",
+        "sleep",
+        "evening"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "pre-sleep",
+        "fear-screen",
+        "ftl-deletion",
+        "goal-clarity"
+      ]
+    },
+    {
+      "id": "breath-count-deepener",
+      "type": "script",
+      "stage": "deepen",
+      "title": "Breath count deepener",
+      "body": "Count your next five breaths out. Not in — only out. One, and softer. Two, and softer than that. Three. Four. Five. You don't need to keep counting after this; your body has the rhythm now.",
+      "duration_sec": 65,
+      "tags": [
+        "deepening",
+        "focus"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "focus-flow",
+        "morning-rehearsal",
+        "habit-craving"
+      ]
+    },
+    {
+      "id": "depth-check-heaviness",
+      "type": "script",
+      "stage": "depth_check",
+      "title": "Depth check — heaviness",
+      "body": "Before we go on, check where you are. Try lifting one finger, just slightly. If it feels like more effort than it's worth, you're deep enough. If it lifted easily, that's fine too — take one more slow breath out and let the next part land anyway.",
+      "duration_sec": 40,
+      "tags": [
+        "deepening"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "morning-rehearsal",
+        "act-as-if",
+        "fear-screen",
+        "ftl-deletion",
+        "pre-sleep",
+        "focus-flow",
+        "goal-clarity",
+        "habit-craving"
+      ]
+    },
+    {
+      "id": "day-rehearsal-suggestion",
+      "type": "script",
+      "stage": "suggestion",
+      "title": "Rehearse the day",
+      "body": "Run today forward, in order, the way you want it to go. See the first thing you sit down to do, and see yourself starting it without negotiating with yourself first. See the moment today that usually trips you, and see yourself handling it calmly. Feel what that version of the day feels like in your chest — that feeling is the part that matters, more than the pictures.",
+      "duration_sec": 150,
+      "tags": [
+        "rehearsal",
+        "morning",
+        "focus"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "morning-rehearsal",
+        "goal-clarity"
+      ]
+    },
+    {
+      "id": "act-as-if-suggestion",
+      "type": "script",
+      "stage": "suggestion",
+      "title": "Act as if",
+      "body": "Think of the version of you who already does this without strain. Not a fantasy — just you, a bit further along. How does that person sit? How fast do they talk? What do they not bother arguing about? Step into that posture now while you're here, so that when you open your eyes your body already knows the shape of it.",
+      "duration_sec": 130,
+      "tags": [
+        "act-as-if",
+        "identity",
+        "confidence"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "act-as-if",
+        "goal-clarity",
+        "morning-rehearsal",
+        "ftl-deletion",
+        "fear-screen"
+      ]
+    },
+    {
+      "id": "fear-screen-suggestion",
+      "type": "script",
+      "stage": "suggestion",
+      "title": "Shrinking screen",
+      "body": "Put the thing you're afraid of on a screen in front of you, like a scene playing without you in it. Now push the screen back until it's small and far away. Drain the color out of it. Turn the sound down until it's a murmur. Notice that you can still see it, and it no longer has the same pull on you. It's information now, not a threat.",
+      "duration_sec": 140,
+      "tags": [
+        "fear",
+        "screen-technique"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "fear-screen"
+      ]
+    },
+    {
+      "id": "ftl-name-and-invert",
+      "type": "script",
+      "stage": "ftl",
+      "title": "Name it, then its opposite",
+      "body": "Name the belief in the plainest words you've got. Not the polite version — the one you actually think. Say it once, here, where it's safe to hear it. Now notice where you learned it, and that it was a conclusion someone drew from limited information. Now say its opposite, in the same plain words, and stay with it long enough to feel your body's objection and let the objection pass.",
+      "duration_sec": 160,
+      "tags": [
+        "ftl",
+        "fear",
+        "identity"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "ftl-deletion",
+        "fear-screen",
+        "act-as-if"
+      ]
+    },
+    {
+      "id": "pre-sleep-suggestion",
+      "type": "script",
+      "stage": "suggestion",
+      "title": "Pre-sleep programming",
+      "body": "The day is finished and it does not need reviewing again. Hand tomorrow's first problem to the part of you that works on things while you sleep; it doesn't need you awake for that. From here, every breath out takes you further down, and there's no count back up — this one ends in sleep.",
+      "duration_sec": 120,
+      "tags": [
+        "sleep",
+        "evening"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "pre-sleep"
+      ]
+    },
+    {
+      "id": "focus-flow-suggestion",
+      "type": "script",
+      "stage": "suggestion",
+      "title": "Narrow the beam",
+      "body": "For the next stretch of work there is one task, and everything else is scenery. See the task, and see its first move — the smallest physical action that starts it. When your attention drifts, and it will, notice the drift without comment and come back to the one task. Coming back is the skill; the drifting isn't a failure.",
+      "duration_sec": 110,
+      "tags": [
+        "focus",
+        "attention"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "focus-flow"
+      ]
+    },
+    {
+      "id": "goal-clarity-suggestion",
+      "type": "script",
+      "stage": "suggestion",
+      "title": "Get specific",
+      "body": "Bring up what you say you want, and make it concrete enough to recognise. What's the first hour of having it like? Who's there? What have you stopped doing? If the picture stays vague, that vagueness is the real obstacle, not motivation. Let one specific detail arrive and hold it.",
+      "duration_sec": 130,
+      "tags": [
+        "clarity",
+        "identity"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "goal-clarity"
+      ]
+    },
+    {
+      "id": "craving-reprogram-suggestion",
+      "type": "script",
+      "stage": "suggestion",
+      "title": "Sit with the wave",
+      "body": "Find the craving in your body and describe it to yourself as sensation only — where it is, its size, whether it's hot or tight or hollow. Watch it rise. Notice that it peaks, and then it drops, whether or not you act on it. You are not refusing anything; you're just staying long enough to see it come down on its own.",
+      "duration_sec": 140,
+      "tags": [
+        "craving",
+        "attention"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "habit-craving"
+      ]
+    },
+    {
+      "id": "count-up-return",
+      "type": "script",
+      "stage": "return",
+      "title": "Count-up return",
+      "body": "Coming back up now. One — the room coming back. Two — your breathing picking up a little. Three — feeling your hands and feet. Four — nearly all the way, and clear-headed. Five — eyes open, awake, and the suggestion stays with you.",
+      "duration_sec": 45,
+      "tags": [
+        "induction",
+        "morning"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "morning-rehearsal",
+        "act-as-if",
+        "fear-screen",
+        "ftl-deletion",
+        "focus-flow",
+        "goal-clarity",
+        "habit-craving"
+      ]
+    },
+    {
+      "id": "sleep-return",
+      "type": "script",
+      "stage": "return",
+      "title": "No return — drift to sleep",
+      "body": "There's no counting back from this one. Let the last thing you heard go, and let sleep take it from here.",
+      "duration_sec": 25,
+      "tags": [
+        "sleep",
+        "evening"
+      ],
+      "timestamp": "",
+      "status": "approved",
+      "session_types": [
+        "pre-sleep"
+      ]
+    },
+    {
+      "id": "language-swap",
+      "type": "practice",
+      "hypnosis": false,
+      "title": "Language swap",
+      "body": "Catch yourself using should, need to, or try, and restate the same sentence as I am, I want to, or I get to. The point isn't positive thinking — it's that should and try both describe someone being pushed, and the swap forces you to say whether you actually intend the thing or not.",
+      "duration_sec": 90,
+      "tags": [
+        "language",
+        "midday"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "ad-filter",
+      "type": "practice",
+      "hypnosis": false,
+      "title": "Ad filter",
+      "body": "Take one ad or one piece of engineered content you saw today and name three things about it: the feeling it was built to create, what it wants you to do, and who profits if you do. Naming the mechanism is most of the defence.",
+      "duration_sec": 90,
+      "tags": [
+        "influence-literacy",
+        "attention",
+        "midday"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "scroll-swap",
+      "type": "practice",
+      "hypnosis": false,
+      "title": "Scroll swap",
+      "body": "When the urge to scroll arrives, it is almost never about content. Name the feeling underneath it — bored, tired, anxious, lonely, avoiding one specific task — and then do the thirty-second version of what that feeling actually wants.",
+      "duration_sec": 45,
+      "tags": [
+        "craving",
+        "attention",
+        "midday"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "suggestion-is-participation",
+      "type": "principle",
+      "title": "Suggestion needs your participation",
+      "body": "Nothing in a session goes in against your will. Hypnosis is a focused state in which suggestions you already agree with land more easily; it is not control. This is why every session here shows you its suggestions first — if you don't want one, it won't work anyway, so you may as well see it.",
+      "duration_sec": 0,
+      "tags": [
+        "influence-literacy",
+        "identity"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "emotion-is-the-carrier",
+      "type": "principle",
+      "title": "Emotion is the carrier",
+      "body": "A suggestion repeated flatly tends to do very little. The same suggestion held with a real felt emotion tends to stick. That's why sessions here ask you to feel the state rather than recite the words.",
+      "duration_sec": 0,
+      "tags": [
+        "suggestion",
+        "identity"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "repetition-over-intensity",
+      "type": "principle",
+      "title": "Repetition beats intensity",
+      "body": "A short session done daily generally outperforms a long session done occasionally. Treat the streak as the mechanism, not as a score.",
+      "duration_sec": 0,
+      "tags": [
+        "identity",
+        "morning"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "prompt-identity-gap",
+      "type": "prompt",
+      "title": "Where's the gap?",
+      "body": "Who did you act like today, and who do you want to be? Name one specific moment where the two came apart.",
+      "duration_sec": 120,
+      "tags": [
+        "identity",
+        "evening"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "prompt-fear-underneath",
+      "type": "prompt",
+      "title": "What's underneath it?",
+      "body": "Pick the thing you avoided today. What were you actually afraid would happen, stated plainly?",
+      "duration_sec": 120,
+      "tags": [
+        "fear",
+        "evening"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "prompt-evidence-against",
+      "type": "prompt",
+      "title": "Evidence against the belief",
+      "body": "Take the limiting belief you worked on most recently. Write one thing that happened this week that doesn't fit it.",
+      "duration_sec": 120,
+      "tags": [
+        "ftl",
+        "evening"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "reminder-first-thing",
+      "type": "reminder",
+      "title": "Before the phone",
+      "body": "Session first. Email can wait fifteen minutes.",
+      "duration_sec": 0,
+      "tags": [
+        "morning"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "reminder-language",
+      "type": "reminder",
+      "title": "Language check",
+      "body": "Said should yet today? Restate it as I want to.",
+      "duration_sec": 0,
+      "tags": [
+        "language",
+        "midday"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    },
+    {
+      "id": "reminder-wind-down",
+      "type": "reminder",
+      "title": "Wind down",
+      "body": "Last thing tonight, not the phone.",
+      "duration_sec": 0,
+      "tags": [
+        "evening",
+        "sleep"
+      ],
+      "timestamp": "",
+      "status": "approved"
+    }
+  ]
+}

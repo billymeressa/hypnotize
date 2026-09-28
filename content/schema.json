@@ -1,0 +1,37 @@
+{
+  "$comment": "Documentation + validator contract for content/sources/*.json. See CONTENT.md.",
+  "source": {
+    "id": "string, unique across all sources, stable forever",
+    "title": "string",
+    "url": "string (empty allowed only for the original-starter set)",
+    "creator": "string",
+    "date_added": "YYYY-MM-DD",
+    "entries": "Entry[]"
+  },
+  "entry": {
+    "id": "string, unique within source, kebab-case, stable forever",
+    "type": ["principle", "practice", "prompt", "script", "reminder"],
+    "title": "string",
+    "body": "string, paraphrased, never verbatim transcript text",
+    "duration_sec": "number, 0 for principle/reminder",
+    "tags": "string[]",
+    "timestamp": "MM:SS | HH:MM:SS | \"\" if not from a video",
+    "status": ["draft", "approved"],
+    "session_types": "string[], optional, script only",
+    "stage": ["open", "deepen", "depth_check", "suggestion", "ftl", "return"],
+    "hypnosis": "boolean, optional; false marks a non-hypnosis item",
+    "notes": "string, optional, reviewer-only, never shown in app"
+  },
+  "banned_body_substrings": ["cure", "heal your", "guaranteed", "instantly", "overnight", "will make you rich"],
+  "session_types": [
+    "morning-rehearsal",
+    "act-as-if",
+    "fear-screen",
+    "ftl-deletion",
+    "pre-sleep",
+    "focus-flow",
+    "goal-clarity",
+    "habit-craving"
+  ],
+  "stages": ["open", "deepen", "depth_check", "suggestion", "ftl", "return"]
+}
