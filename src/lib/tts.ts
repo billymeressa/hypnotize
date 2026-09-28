@@ -16,19 +16,33 @@ export function onVoicesReady(cb: () => void): () => void {
   return () => speechSynthesis.removeEventListener('voiceschanged', handler);
 }
 
+// Android Chrome stops synthesis silently after ~15s. A periodic resume kick keeps it going.
+let _keepAlive: ReturnType<typeof setInterval> | null = null;
+function startKeepAlive() {
+  if (_keepAlive) return;
+  _keepAlive = setInterval(() => {
+    if (!speechSynthesis.speaking) return;
+    speechSynthesis.pause();
+    speechSynthesis.resume();
+  }, 10000);
+}
+function stopKeepAlive() {
+  if (_keepAlive) { clearInterval(_keepAlive); _keepAlive = null; }
+}
+
 export function speak(text: string, opts: { rate: number; voiceUri: string | null; onEnd?: () => void }) {
   if (!ttsSupported()) { opts.onEnd?.(); return; }
-  // Split on sentence boundaries so the pauses fall in natural places.
   const chunks = text.split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter(Boolean);
   const voice = opts.voiceUri ? listVoices().find((v) => v.voiceURI === opts.voiceUri) ?? null : null;
   let i = 0;
+  startKeepAlive();
   const next = () => {
-    if (i >= chunks.length) { opts.onEnd?.(); return; }
+    if (i >= chunks.length) { stopKeepAlive(); opts.onEnd?.(); return; }
     const u = new SpeechSynthesisUtterance(chunks[i++]);
     u.rate = opts.rate;
     u.pitch = 0.95;
     if (voice) u.voice = voice;
-    u.onend = () => setTimeout(next, 420);   // breathing-paced gap between sentences
+    u.onend = () => setTimeout(next, 420);
     u.onerror = () => setTimeout(next, 200);
     speechSynthesis.speak(u);
   };
@@ -36,5 +50,6 @@ export function speak(text: string, opts: { rate: number; voiceUri: string | nul
 }
 
 export function stopSpeaking() {
+  stopKeepAlive();
   if (ttsSupported()) speechSynthesis.cancel();
 }

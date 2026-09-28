@@ -27,6 +27,13 @@ class HypnotizeDB extends Dexie {
       sessions: 'id, session_type, created_at',
       queue: 'id, slot, created_at',
     });
+    // v2: enable TTS by default for users who had it stored as false from v1.
+    this.version(2).stores({}).upgrade(async (tx) => {
+      const s = await tx.table('settings').get('settings');
+      if (s && s.tts_enabled === false) {
+        await tx.table('settings').update('settings', { tts_enabled: true });
+      }
+    });
   }
 }
 
@@ -42,7 +49,7 @@ export const uid = () =>
 
 export const DEFAULT_SETTINGS: Settings = {
   id: 'settings',
-  tts_enabled: false,
+  tts_enabled: true,
   tts_voice_uri: null,
   tts_rate: 0.85,
   pace: 'slow',

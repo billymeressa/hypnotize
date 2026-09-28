@@ -6,7 +6,7 @@ import { db, getProfile, today, uid } from '../db';
 import { composeSession } from '../lib/compose';
 import { entry, SESSION_TYPE_META } from '../lib/content';
 import type { SessionType } from '../types';
-import { Glow, Sheet, Mood } from '../components/ui';
+import { Sheet, Mood } from '../components/ui';
 import ScrollSwap from './ScrollSwap';
 import { hashParams } from '../routes';
 
@@ -68,65 +68,49 @@ export default function Today({ ctx, settings }: { ctx: Launcher; settings: Sett
         <h1 style={{ marginTop: 10 }}>{GREETING[slot]}</h1>
         <p>
           {allDone
-            ? "You're done for today."
+            ? "All done — tap any item to go again."
             : slot === 'morning'
               ? 'Session first — before the phone opens anything else.'
               : `${remaining.length} left today.`}
         </p>
       </div>
 
-      {allDone ? (
-        <div className="stack-lg" style={{ marginTop: 40 }}>
-          <Glow />
-          <div style={{ textAlign: 'center' }}>
-            <h2>Nothing else today</h2>
-            <p className="dim small" style={{ marginTop: 10 }}>
-              There is no extra credit here and nothing more to scroll. Close the app.
-            </p>
-          </div>
-          <button className="btn-text" style={{ textAlign: 'center' }} onClick={() => ctx.go('library')}>
-            Browse the library anyway
-          </button>
-        </div>
-      ) : (
-        <div className="stack">
-          {(['morning', 'midday', 'evening'] as const).map((s) => {
-            const group = items.filter((it) => it.slot === s);
-            if (!group.length) return null;
-            return (
-              <div key={s} className="stack" style={{ marginBottom: 12 }}>
-                <p className="eyebrow">{s}</p>
-                {group.map((it) => {
-                  const done = isDone(it);
-                  return (
-                    <button
-                      key={it.id}
-                      className={`card${done ? ' done' : ''}`}
-                      onClick={() => {
-                        if (done) return;
-                        if (it.kind === 'session') void startSession(it.ref as SessionType, it.minutes, it.id);
-                        else if (it.kind === 'checkin') setCheckin(true);
-                        else setOpenItem(it);
-                      }}
-                    >
-                      <div className="row-between">
-                        <div className="grow">
-                          <div className="item-title">{it.title}</div>
-                          <div className="meta" style={{ marginTop: 4 }}>
-                            {it.minutes} min
-                            {it.kind !== 'session' && <> · <span className="badge badge-note" style={{ padding: '2px 6px' }}>not hypnosis</span></>}
-                          </div>
+      <div className="stack">
+        {(['morning', 'midday', 'evening'] as const).map((s) => {
+          const group = items.filter((it) => it.slot === s);
+          if (!group.length) return null;
+          return (
+            <div key={s} className="stack" style={{ marginBottom: 12 }}>
+              <p className="eyebrow">{s}</p>
+              {group.map((it) => {
+                const done = isDone(it);
+                return (
+                  <button
+                    key={it.id}
+                    className={`card${done ? ' done' : ''}`}
+                    onClick={() => {
+                      if (it.kind === 'session') void startSession(it.ref as SessionType, it.minutes, it.id);
+                      else if (it.kind === 'checkin') setCheckin(true);
+                      else setOpenItem(it);
+                    }}
+                  >
+                    <div className="row-between">
+                      <div className="grow">
+                        <div className="item-title">{it.title}</div>
+                        <div className="meta" style={{ marginTop: 4 }}>
+                          {it.minutes} min
+                          {it.kind !== 'session' && <> · <span className="badge badge-note" style={{ padding: '2px 6px' }}>not hypnosis</span></>}
                         </div>
-                        {done && <span className="meta">done</span>}
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                      {done && <span className="meta">done</span>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
 
       {queued.length > 0 && (
         <div className="stack" style={{ marginTop: 30 }}>
